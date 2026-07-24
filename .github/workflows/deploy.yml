@@ -1,0 +1,171 @@
+name: Deploy to Azure
+
+# Continuous deployment to Azure App Service (Web App for Containers).
+#
+# Flow (mirrors a production-style release):
+#   gate  -> build (push image to ACR) -> [manual approval] -> deploy
+#   deploy runs a post-deploy Playwright smoke test; on failure it ROLLS BACK
+#   to the previously deployed image and always uploads the smoke report.
+#
+# GATED BY DESIGN: the `gate` job checks the Azure secrets exist; nothing runs
+# without them, so this can never deploy by accident.
+#
+# One-time setup for the approval gate: in GitHub repo Settings -> Environments,
+# create an environment named `production` and add yourself as a Required
+# reviewer. The `deploy` job below references it, so GitHub pauses for approval.
+#
+# Required repository secrets (see hard/DEPLOYMENT.md):
+#   AZURE_CREDENTIALS   - service principal JSON (az ad sp create-for-rbac --sdk-auth)
+#   ACR_LOGIN_SERVER    - e.g. cookbookacr123.azurecr.io   (Bicep output)
+#   AZURE_WEBAPP_NAME   - the Web App name                 (Bicep output)
+#   ANTHROPIC_API_KEY   - optional; pushed to App Service settings on deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "hard/cookbook-api/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+env:
+  RESOURCE_GROUP: cookbook-rg
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+        run: |
+          if [ -n "$AZURE_CREDENTIALS" ] && [ -n "$ACR_LOGIN_SERVER" ] && [ -n "$AZURE_WEBAPP_NAME" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Deploy skipped — set AZURE_CREDENTIALS, ACR_LOGIN_SERVER and AZURE_WEBAPP_NAME secrets to enable live deployment."
+          fi
+
+  build:
+    needs: gate
+    if: needs.gate.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login --name "${ACR_LOGIN_SERVER%%.*}"
+        env:
+          ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+
+      - name: Compute image tag
+        id: meta
+        run: echo "image=${ACR_LOGIN_SERVER}/cookbook-api:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+        env:
+          ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+
+      - name: Build and push image (tagged by commit SHA)
+        working-directory: hard/cookbook-api
+        run: |
+          docker build -t "$IMAGE" -t "${ACR_LOGIN_SERVER}/cookbook-api:latest" .
+          docker push "$IMAGE"
+          docker push "${ACR_LOGIN_SERVER}/cookbook-api:latest"
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Referencing an environment with a Required reviewer makes GitHub PAUSE here
+    # for manual approval before any deploy step runs.
+    environment: production
+    env:
+      IMAGE: ${{ needs.build.outputs.image }}
+      AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+      SMOKE_URL: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Capture currently deployed image (for rollback)
+        id: prev
+        run: |
+          CURRENT=$(az webapp config show --name "$AZURE_WEBAPP_NAME" --resource-group "$RESOURCE_GROUP" --query linuxFxVersion -o tsv || true)
+          echo "image=${CURRENT#DOCKER|}" >> "$GITHUB_OUTPUT"
+          echo "Previous image: ${CURRENT#DOCKER|}"
+
+      - name: Apply runtime secret (if provided)
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            az webapp config appsettings set --name "$AZURE_WEBAPP_NAME" --resource-group "$RESOURCE_GROUP" \
+              --settings ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" >/dev/null
+            echo "ANTHROPIC_API_KEY applied (live mode)."
+          else
+            echo "No ANTHROPIC_API_KEY — staying in demo mode."
+          fi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Deploy image to the Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          images: ${{ env.IMAGE }}
+
+      - name: Install smoke-test deps
+        working-directory: hard/cookbook-api
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Post-deploy smoke test
+        id: smoke
+        continue-on-error: true
+        working-directory: hard/cookbook-api
+        run: npm run test:smoke
+        env:
+          SMOKE_URL: ${{ env.SMOKE_URL }}
+
+      - name: Roll back on smoke-test failure
+        if: steps.smoke.outcome == 'failure' && steps.prev.outputs.image != ''
+        run: |
+          echo "::warning::Smoke test failed — rolling back to ${{ steps.prev.outputs.image }}"
+          az webapp config container set --name "$AZURE_WEBAPP_NAME" --resource-group "$RESOURCE_GROUP" \
+            --docker-custom-image-name "${{ steps.prev.outputs.image }}"
+
+      - name: Upload smoke-test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: hard/cookbook-api/smoke-report
+          if-no-files-found: ignore
+
+      - name: Fail the job if the smoke test failed
+        if: steps.smoke.outcome == 'failure'
+        run: |
+          echo "Deployment rolled back because the smoke test failed."
+          exit 1

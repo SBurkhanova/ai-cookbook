@@ -1,0 +1,69 @@
+name: CI
+
+# Test-gated build for the Hard-mode API.
+# The 89 Vitest tests from Challenge 5 are the gate: if they fail, the image
+# is never built.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "hard/cookbook-api/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    paths:
+      - "hard/cookbook-api/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: hard/cookbook-api
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: hard/cookbook-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests (the deployment gate)
+        run: npm test
+
+      - name: Build the production Docker image
+        # Only reached if the tests pass. Proves the image builds; does not push.
+        run: docker build -t cookbook-api:ci .
+
+  e2e:
+    # Browser end-to-end tests as a separate required check (like unit tests,
+    # this can gate merging once branch protection requires it).
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: hard/cookbook-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        run: npm run test:e2e
