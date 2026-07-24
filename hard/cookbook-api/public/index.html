@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Cookbook</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>🍳 AI Cookbook</h1>
+      <p class="tagline">Turn what you have into something to cook.</p>
+    </header>
+
+    <section id="form-panel" class="panel">
+      <label for="ingredient-input">Ingredients</label>
+      <div id="chips" class="chips"></div>
+      <input id="ingredient-input" type="text"
+             placeholder="Type an ingredient, press Enter…" autocomplete="off" />
+      <div class="filters">
+        <label>Meal type
+          <select id="meal-type">
+            <option value="">Any</option>
+            <option>breakfast</option><option>lunch</option>
+            <option>dinner</option><option>snack</option><option>dessert</option>
+          </select>
+        </label>
+        <label>Cook time
+          <select id="cook-time">
+            <option value="">Any</option>
+            <option value="15 minutes">Under 15 min</option>
+            <option value="30 minutes">Under 30 min</option>
+            <option value="60 minutes">Under 60 min</option>
+          </select>
+        </label>
+      </div>
+      <div class="diet-filters">
+        <span class="diet-label">Dietary (optional)</span>
+        <div class="diet-pills">
+          <button type="button" class="diet-pill" data-diet="vegetarian">Vegetarian</button>
+          <button type="button" class="diet-pill" data-diet="vegan">Vegan</button>
+          <button type="button" class="diet-pill" data-diet="gluten-free">Gluten-free</button>
+          <button type="button" class="diet-pill" data-diet="dairy-free">Dairy-free</button>
+        </div>
+      </div>
+      <button id="generate-btn">Generate Recipe</button>
+      <p id="error" class="error" hidden></p>
+    </section>
+
+    <section id="recipe-panel" class="panel" hidden>
+      <h2 id="r-title"></h2>
+      <p class="meta">
+        <span id="r-time"></span> · <span id="r-servings"></span> ·
+        <span id="r-difficulty" class="badge"></span>
+        <span id="r-cached" class="badge cached" hidden>⚡ Cached</span>
+      </p>
+      <div id="r-diet" class="diet-tags"></div>
+      <h3>Ingredients</h3>
+      <ul id="r-ingredients"></ul>
+      <h3>Steps</h3>
+      <ol id="r-steps"></ol>
+      <p id="r-tips" class="tips"></p>
+      <div class="row">
+        <button id="save-btn">Save Recipe</button>
+        <button id="another-btn" class="secondary">Generate Another</button>
+      </div>
+      <p id="save-msg" class="save-msg" hidden></p>
+    </section>
+
+    <section class="panel">
+      <h2>Community Recipes</h2>
+      <div id="community-list" class="community"></div>
+      <p id="community-empty" class="muted" hidden>No saved recipes yet — generate one and hit Save.</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+node_modules
+.env
+.env.local
+.env.production
+test
+e2e
+coverage
+playwright-report
+test-results
+*.log
+Dockerfile
+.dockerignore

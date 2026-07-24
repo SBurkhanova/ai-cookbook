@@ -1,0 +1,151 @@
+:root {
+  --bg-1: #fdfbf7;
+  --bg-2: #f3ede3;
+  --panel: #ffffff;
+  --ink: #1c1917;
+  --muted: #78716c;
+  --accent: #ea580c;
+  --accent-2: #f59e0b;
+  --accent-ink: #fff;
+  --line: #ece7e1;
+  --ring: rgba(234, 88, 12, 0.18);
+  --shadow: 0 1px 2px rgba(28, 25, 23, .04), 0 8px 24px rgba(28, 25, 23, .06);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: radial-gradient(1200px 600px at 50% -10%, var(--bg-2), var(--bg-1)) fixed;
+  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+
+header { text-align: center; margin-bottom: 28px; }
+h1 {
+  margin: 0; font-size: 2.25rem; font-weight: 800; letter-spacing: -.02em;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.tagline { color: var(--muted); margin: 6px 0 0; font-size: 1.02rem; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 26px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.panel > h2 {
+  margin: 0 0 16px; font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em;
+}
+
+label { display: block; font-weight: 600; margin-bottom: 8px; font-size: .92rem; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.chip {
+  background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412;
+  border-radius: 999px; padding: 5px 12px; font-size: .88rem; font-weight: 500;
+  display: inline-flex; gap: 8px; align-items: center;
+}
+.chip button {
+  border: 0; background: none; cursor: pointer; color: #c2410c;
+  font-size: 1.05rem; line-height: 1; padding: 0; opacity: .7;
+}
+.chip button:hover { opacity: 1; }
+
+input[type=text], select {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 12px; font: inherit; background: #fff; color: var(--ink);
+  transition: border-color .15s, box-shadow .15s;
+}
+input[type=text]:focus, select:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring);
+}
+.filters { display: flex; gap: 14px; margin: 18px 0; }
+.filters label { flex: 1; }
+
+.row { display: flex; gap: 12px; margin-top: 20px; }
+.row button { flex: 1; margin-top: 0; }
+
+button#generate-btn, button#save-btn, button.secondary {
+  width: 100%; padding: 13px 16px; border: 0; border-radius: 12px; cursor: pointer;
+  font: inherit; font-weight: 700; letter-spacing: .01em; color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 6px 16px rgba(234, 88, 12, .22);
+  transition: transform .12s ease, box-shadow .12s ease, opacity .12s;
+}
+button#generate-btn:hover, button#save-btn:hover, button.secondary:hover {
+  transform: translateY(-1px); box-shadow: 0 10px 22px rgba(234, 88, 12, .28);
+}
+button#generate-btn:active, button#save-btn:active, button.secondary:active {
+  transform: translateY(0);
+}
+button.secondary {
+  background: #fff; color: var(--ink); border: 1px solid var(--line);
+  box-shadow: none;
+}
+button.secondary:hover { background: #faf8f4; box-shadow: none; }
+button:disabled { opacity: .55; cursor: progress; transform: none; }
+
+.error {
+  color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca;
+  border-radius: 12px; padding: 12px 14px; margin-top: 14px; font-size: .92rem;
+}
+.save-msg { color: #047857; margin-top: 12px; font-weight: 600; font-size: .92rem; }
+.muted { color: var(--muted); }
+
+#recipe-panel h2 { margin: 0 0 6px; font-size: 1.5rem; letter-spacing: -.02em; }
+#recipe-panel h3 {
+  margin: 22px 0 8px; font-size: .82rem; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted);
+}
+#recipe-panel ul, #recipe-panel ol { margin: 0; padding-left: 1.25rem; }
+#recipe-panel li { margin: 4px 0; }
+.meta { color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .92rem; }
+.badge {
+  background: #ecfdf5; color: #065f46; border-radius: 999px;
+  padding: 3px 11px; font-size: .8rem; font-weight: 600;
+}
+.badge.medium { background: #fffbeb; color: #92400e; }
+.badge.hard { background: #fef2f2; color: #991b1b; }
+.badge.unknown { background: #f4f4f5; color: #3f3f46; }
+.badge.cached { background: #eef2ff; color: #3730a3; }
+
+.diet-filters { margin-bottom: 18px; }
+.diet-label { display: block; font-weight: 600; margin-bottom: 8px; font-size: .92rem; }
+.diet-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.diet-pill {
+  border: 1px solid var(--line); background: #fff; color: var(--ink);
+  border-radius: 999px; padding: 7px 14px; font: inherit; font-size: .85rem; cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.diet-pill:hover { border-color: #fed7aa; }
+.diet-pill.active { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; font-weight: 600; }
+.diet-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.diet-tags.inline { margin-top: 0; }
+.diet-tag { background: #ecfdf5; color: #065f46; border-radius: 999px; padding: 2px 9px; font-size: .78rem; font-weight: 600; }
+.tips {
+  background: linear-gradient(0deg, #fffaf3, #fff);
+  border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  padding: 12px 14px; border-radius: 10px; margin-top: 18px; color: #57534e;
+}
+
+.community { display: flex; flex-direction: column; gap: 10px; }
+.recipe-card {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px;
+  cursor: pointer; background: #fff;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s;
+}
+.recipe-card:hover {
+  transform: translateY(-1px); border-color: #fed7aa;
+  box-shadow: 0 6px 16px rgba(28, 25, 23, .07);
+}
+.recipe-card .del {
+  border: 0; background: none; color: #9ca3af; cursor: pointer; font-size: 1.05rem;
+  transition: color .12s;
+}
+.recipe-card .del:hover { color: #b91c1c; }

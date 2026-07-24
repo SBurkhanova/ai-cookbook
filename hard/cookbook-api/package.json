@@ -1,0 +1,31 @@
+{
+  "name": "ai-cookbook-hard-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI Cookbook — Hard mode backend: Express + MongoDB + Claude.",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test --config playwright.smoke.config.js",
+    "test:all": "vitest run && playwright test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "mongodb": "^6.8.0",
+    "redis": "^4.7.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@vitest/coverage-v8": "^4.1.9",
+    "open-cli": "^9.0.0",
+    "supertest": "^7.0.0",
+    "vitest": "^4.1.9"
+  }
+}

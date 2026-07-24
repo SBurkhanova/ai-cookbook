@@ -1,0 +1,38 @@
+# Hard mode: API + MongoDB. Run with `docker compose up`.
+# Provide ANTHROPIC_API_KEY in your shell or a .env file next to this compose
+# file; without it the API runs in demo mode.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  api:
+    build: ./cookbook-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      NO_OPEN: "1"
+      MONGODB_URI: mongodb://mongo:27017/cookbook
+      REDIS_URL: redis://redis:6379
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on:
+      - mongo
+      - redis
+
+volumes:
+  mongo-data:
+  redis-data:
