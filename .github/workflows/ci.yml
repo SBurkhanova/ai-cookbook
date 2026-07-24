@@ -1,24 +1,14 @@
 name: CI
 
-# Test-gated build for the Hard-mode API.
-# The 89 Vitest tests from Challenge 5 are the gate: if they fail, the image
-# is never built.
+# Test-gated build for the API.
+# The 89 tests from Challenge 5 are the gate: if they fail, the image is
+# never built.
 
 on:
   push:
     branches: [main]
-    paths:
-      - "hard/cookbook-api/**"
-      - ".github/workflows/ci.yml"
   pull_request:
-    paths:
-      - "hard/cookbook-api/**"
-      - ".github/workflows/ci.yml"
   workflow_dispatch:
-
-defaults:
-  run:
-    working-directory: hard/cookbook-api
 
 jobs:
   test-and-build:
@@ -32,7 +22,7 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: hard/cookbook-api/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -57,7 +47,7 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: hard/cookbook-api/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
